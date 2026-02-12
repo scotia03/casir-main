@@ -26,3 +26,8 @@ Project ini bisa diakses publik lewat browser dengan mode web (bukan Electron ru
 ## 4. Catatan
 - Mode web memakai Firebase client SDK dari browser.
 - Electron app (`npm start`) tetap bisa dipakai seperti biasa.
+
+## 5. push dan update vercel
+git add .
+git commit -m "fix: vercel routing and deployment updates"
+git push origin main

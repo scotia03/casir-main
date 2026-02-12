@@ -483,3 +483,84 @@ td {
     max-height: min(84vh, 760px);
   }
 }
+
+@media (max-width: 640px) {
+  .sidebar {
+    padding: 14px 10px;
+  }
+
+  .brand h2 {
+    font-size: 20px;
+  }
+
+  .sideNav {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .navBtn {
+    padding: 9px 8px;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .contentWrap {
+    padding: 12px;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+
+  .card {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  table {
+    min-width: 320px;
+  }
+
+  th,
+  td {
+    font-size: 13px;
+    padding: 7px 6px;
+  }
+
+  .actionRow button {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .cartFab {
+    width: 56px;
+    height: 56px;
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .cartDrawer {
+    right: 8px;
+    left: 8px;
+    width: auto;
+    bottom: 74px;
+    max-height: 82vh;
+    padding: 12px;
+  }
+
+  .cartList {
+    max-height: 48vh;
+  }
+
+  .toast {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+}
