@@ -8,6 +8,7 @@ const bridgeApi = {
   register: (payload) => authService.register(payload),
   getProducts: () => productService.getProducts(),
   createProduct: (payload) => productService.createProduct(payload),
+  deleteProduct: (productId) => productService.deleteProduct(productId),
   setProductOutOfStock: (productId, isOutOfStock) =>
     productService.setProductOutOfStock(productId, isOutOfStock),
   createSale: (payload) => salesService.createSale(payload),

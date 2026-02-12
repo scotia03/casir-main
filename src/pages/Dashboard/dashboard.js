@@ -11,6 +11,7 @@ document.getElementById("userInfo").innerText = `Login sebagai: ${user.username}
 const productForm = document.getElementById("productForm");
 const productAvailableBody = document.getElementById("productAvailableBody");
 const productOutOfStockBody = document.getElementById("productOutOfStockBody");
+const addProductAvailableBody = document.getElementById("addProductAvailableBody");
 const productListStatusEl = document.getElementById("productListStatus");
 const cartBody = document.getElementById("cartBody");
 const cartTotalEl = document.getElementById("cartTotal");
@@ -26,6 +27,7 @@ const sidebarToggleBtn = document.getElementById("sidebarToggleBtn");
 const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
 const salesList = document.getElementById("salesList");
 const productStatusEl = document.getElementById("productStatus");
+const addProductListStatusEl = document.getElementById("addProductListStatus");
 const checkoutStatusEl = document.getElementById("checkoutStatus");
 const navButtons = document.querySelectorAll("[data-nav-target]");
 const featurePanels = document.querySelectorAll(".featurePanel");
@@ -155,12 +157,18 @@ function syncCartWithProducts() {
 function renderProducts() {
   productAvailableBody.innerHTML = "";
   productOutOfStockBody.innerHTML = "";
+  addProductAvailableBody.innerHTML = "";
 
   const availableProducts = products.filter((product) => !product.isOutOfStock);
   const outOfStockProducts = products.filter((product) => product.isOutOfStock);
 
   if (availableProducts.length === 0) {
     productAvailableBody.innerHTML = `
+      <tr>
+        <td colspan="3">Belum ada produk aktif</td>
+      </tr>
+    `;
+    addProductAvailableBody.innerHTML = `
       <tr>
         <td colspan="3">Belum ada produk aktif</td>
       </tr>
@@ -184,6 +192,24 @@ function renderProducts() {
       .join("");
 
     productAvailableBody.innerHTML = availableRows;
+
+    const addSectionRows = availableProducts
+      .map((product) => {
+        return `
+          <tr>
+            <td>${product.name}</td>
+            <td>${formatCurrency(product.price)}</td>
+            <td>
+              <button class="btnDanger" data-action="delete-product" data-product-id="${product.id}">
+                Hapus
+              </button>
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    addProductAvailableBody.innerHTML = addSectionRows;
   }
 
   if (outOfStockProducts.length === 0) {
@@ -308,6 +334,30 @@ async function setOutOfStockState(productId, isOutOfStock) {
     await loadProducts();
   } catch (error) {
     setStatus(productListStatusEl, error.message || "Gagal mengubah status stok", "error");
+  }
+}
+
+async function deleteProduct(productId) {
+  if (!api) {
+    setStatus(addProductListStatusEl, "API aplikasi tidak tersedia", "error");
+    return;
+  }
+
+  const product = products.find((item) => item.id === productId);
+  const productName = product ? product.name : "produk ini";
+  const confirmed = window.confirm(`Hapus "${productName}" dari daftar produk?`);
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    await api.deleteProduct(productId);
+    cart = cart.filter((item) => item.id !== productId);
+    setStatus(addProductListStatusEl, "Produk berhasil dihapus", "success");
+    await loadProducts();
+  } catch (error) {
+    setStatus(addProductListStatusEl, error.message || "Gagal menghapus produk", "error");
   }
 }
 
@@ -454,11 +504,17 @@ function handleProductAction(event) {
 
   if (action === "mark-in-stock") {
     setOutOfStockState(productId, false);
+    return;
+  }
+
+  if (action === "delete-product") {
+    deleteProduct(productId);
   }
 }
 
 productAvailableBody.addEventListener("click", handleProductAction);
 productOutOfStockBody.addEventListener("click", handleProductAction);
+addProductAvailableBody.addEventListener("click", handleProductAction);
 
 cartBody.addEventListener("click", (event) => {
   const trigger = event.target.closest("button");

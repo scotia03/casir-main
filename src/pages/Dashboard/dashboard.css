@@ -274,6 +274,10 @@ button[disabled] {
   background: #16a34a;
 }
 
+.btnDanger {
+  background: #dc2626;
+}
+
 .tableWrap {
   overflow-x: auto;
 }

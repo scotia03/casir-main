@@ -195,6 +195,25 @@
     };
   }
 
+  async function deleteProduct(productId) {
+    const targetProductId = normalize(productId);
+    if (!targetProductId) {
+      throw buildError("Produk tidak valid");
+    }
+
+    const db = getDb();
+    const ref = db.collection("products").doc(targetProductId);
+    const doc = await ref.get();
+
+    if (!doc.exists) {
+      throw buildError("Produk tidak ditemukan");
+    }
+
+    await ref.delete();
+
+    return { id: targetProductId };
+  }
+
   async function createSale(payload) {
     const userId = normalize(payload && payload.userId);
     const paidAmount = Number(payload && payload.paidAmount);
@@ -334,6 +353,7 @@
     register,
     getProducts,
     createProduct,
+    deleteProduct,
     setProductOutOfStock,
     createSale,
     getRecentSales

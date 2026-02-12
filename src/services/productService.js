@@ -89,4 +89,24 @@ async function setProductOutOfStock(productId, isOutOfStock) {
   };
 }
 
-module.exports = { getProducts, createProduct, setProductOutOfStock };
+async function deleteProduct(productId) {
+  const targetProductId = String(productId || "").trim();
+
+  if (!targetProductId) {
+    throw new Error("Produk tidak valid");
+  }
+
+  const db = getDb();
+  const productRef = db.collection("products").doc(targetProductId);
+  const productDoc = await productRef.get();
+
+  if (!productDoc.exists) {
+    throw new Error("Produk tidak ditemukan");
+  }
+
+  await productRef.delete();
+
+  return { id: targetProductId };
+}
+
+module.exports = { getProducts, createProduct, setProductOutOfStock, deleteProduct };
