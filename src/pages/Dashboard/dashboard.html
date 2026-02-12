@@ -7,8 +7,9 @@
   <link rel="stylesheet" href="dashboard.css">
   <script defer src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
-  <script defer src="../shared/web-api.js?v=20260212"></script>
-  <script defer src="dashboard.js?v=20260212"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script defer src="../shared/web-api.js?v=20260212-4"></script>
+  <script defer src="dashboard.js?v=20260212-4"></script>
 </head>
 <body>
   <div id="sidebarBackdrop" class="sidebarBackdrop"></div>
@@ -118,8 +119,35 @@
         </section>
 
         <section id="sectionSales" class="card featurePanel">
-          <h2>Transaksi Terakhir</h2>
-          <ul id="salesList" class="salesList"></ul>
+          <div class="salesHeader">
+            <h2>Transaksi Terakhir</h2>
+            <button id="downloadSalesBtn" class="btnSecondary" type="button">Download Excel</button>
+          </div>
+          <p class="sectionHint">Cari transaksi berdasarkan ID/kasir/tanggal, lalu unduh hasilnya untuk pencatatan.</p>
+          <div class="salesTools">
+            <input
+              type="text"
+              id="salesSearchInput"
+              placeholder="Cari: ID transaksi, kasir, tanggal..."
+              autocomplete="off"
+            >
+            <button id="salesSearchResetBtn" class="btnLight" type="button">Reset</button>
+          </div>
+          <p id="salesSearchInfo" class="salesSearchInfo"></p>
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Kasir</th>
+                  <th>Item</th>
+                  <th>Total</th>
+                  <th>Tanggal</th>
+                </tr>
+              </thead>
+              <tbody id="salesList"></tbody>
+            </table>
+          </div>
         </section>
       </main>
     </div>

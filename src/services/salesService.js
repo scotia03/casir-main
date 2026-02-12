@@ -153,6 +153,7 @@ async function getRecentSales(limit = 8) {
       totalAmount: Number(data.totalAmount) || 0,
       paidAmount: Number(data.paidAmount) || 0,
       changeAmount: Number(data.changeAmount) || 0,
+      itemCount: Number(data.itemCount) || 0,
       createdAt: toIsoDate(data.createdAt),
       cashier: data.cashier || "unknown"
     };

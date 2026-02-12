@@ -26,6 +26,10 @@ const sidebarBackdrop = document.getElementById("sidebarBackdrop");
 const sidebarToggleBtn = document.getElementById("sidebarToggleBtn");
 const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
 const salesList = document.getElementById("salesList");
+const downloadSalesBtn = document.getElementById("downloadSalesBtn");
+const salesSearchInput = document.getElementById("salesSearchInput");
+const salesSearchResetBtn = document.getElementById("salesSearchResetBtn");
+const salesSearchInfoEl = document.getElementById("salesSearchInfo");
 const productStatusEl = document.getElementById("productStatus");
 const addProductListStatusEl = document.getElementById("addProductListStatus");
 const checkoutStatusEl = document.getElementById("checkoutStatus");
@@ -34,6 +38,8 @@ const featurePanels = document.querySelectorAll(".featurePanel");
 
 let products = [];
 let cart = [];
+let allSales = [];
+let filteredSales = [];
 
 function getApi() {
   if (window.api) {
@@ -292,27 +298,304 @@ function renderSales(sales) {
   salesList.innerHTML = "";
 
   if (!sales || sales.length === 0) {
-    salesList.innerHTML = "<li>Belum ada transaksi</li>";
+    salesList.innerHTML = `
+      <tr>
+        <td colspan="5">Belum ada transaksi</td>
+      </tr>
+    `;
     return;
   }
 
-  const items = sales
+  const rows = sales
     .map((sale) => {
-      const dateText = sale.createdAt ? new Date(sale.createdAt).toLocaleString("id-ID") : "-";
+      const dateText = formatSalesDate(sale.createdAt);
       return `
-        <li>
-          #${sale.id} - ${formatCurrency(sale.totalAmount)} - ${sale.cashier || "unknown"} - ${dateText}
-        </li>
+        <tr>
+          <td>${sale.id}</td>
+          <td>${sale.cashier || "unknown"}</td>
+          <td>${Number(sale.itemCount) || 0}</td>
+          <td>${formatCurrency(sale.totalAmount)}</td>
+          <td>${dateText}</td>
+        </tr>
       `;
     })
     .join("");
 
-  salesList.innerHTML = items;
+  salesList.innerHTML = rows;
+}
+
+function normalizeSearch(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function formatSalesDate(value) {
+  return value ? new Date(value).toLocaleString("id-ID") : "-";
+}
+
+function applySalesFilter() {
+  const keyword = normalizeSearch(salesSearchInput ? salesSearchInput.value : "");
+
+  filteredSales = allSales.filter((sale) => {
+    if (!keyword) {
+      return true;
+    }
+
+    const searchable = [
+      sale.id,
+      sale.cashier || "unknown",
+      formatSalesDate(sale.createdAt),
+      String(Number(sale.totalAmount) || 0),
+      String(Number(sale.itemCount) || 0)
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return searchable.includes(keyword);
+  });
+
+  renderSales(filteredSales);
+  renderSalesSearchInfo(keyword);
+}
+
+function renderSalesSearchInfo(keyword) {
+  if (!salesSearchInfoEl) {
+    return;
+  }
+
+  if (!allSales.length) {
+    salesSearchInfoEl.innerText = "Belum ada data transaksi.";
+    return;
+  }
+
+  if (!keyword) {
+    salesSearchInfoEl.innerText = `Menampilkan ${filteredSales.length} transaksi terbaru.`;
+    return;
+  }
+
+  salesSearchInfoEl.innerText = `Hasil pencarian "${keyword}": ${filteredSales.length} transaksi ditemukan.`;
 }
 
 async function loadRecentSales() {
-  const sales = await api.getRecentSales(8);
-  renderSales(sales);
+  const sales = await api.getRecentSales(1000);
+  allSales = sales;
+  applySalesFilter();
+}
+
+function createSalesRowsForExport(sales) {
+  return sales.map((sale, index) => ({
+    no: index + 1,
+    id: sale.id,
+    dateText: sale.createdAt ? new Date(sale.createdAt).toLocaleString("id-ID") : "-",
+    cashier: sale.cashier || "unknown",
+    itemCount: Number(sale.itemCount) || 0,
+    totalAmount: Number(sale.totalAmount) || 0,
+    paidAmount: Number(sale.paidAmount) || 0,
+    changeAmount: Number(sale.changeAmount) || 0
+  }));
+}
+
+function escapeCsvCell(value) {
+  const normalized = String(value ?? "").replace(/"/g, "\"\"");
+  return `"${normalized}"`;
+}
+
+function createSalesCsvContent(sales) {
+  const rowsForExport = createSalesRowsForExport(sales);
+  const headers = [
+    "No",
+    "ID Transaksi",
+    "Tanggal",
+    "Kasir",
+    "Jumlah Item",
+    "Total Belanja",
+    "Jumlah Bayar",
+    "Kembalian"
+  ];
+
+  const rows = rowsForExport.map((sale) => {
+    return [
+      sale.no,
+      sale.id,
+      sale.dateText,
+      sale.cashier || "unknown",
+      sale.itemCount,
+      sale.totalAmount,
+      sale.paidAmount,
+      sale.changeAmount
+    ]
+      .map(escapeCsvCell)
+      .join(",");
+  });
+
+  return [headers.map(escapeCsvCell).join(","), ...rows].join("\n");
+}
+
+function getTimestampToken() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  const hh = String(now.getHours()).padStart(2, "0");
+  const min = String(now.getMinutes()).padStart(2, "0");
+  return `${yyyy}${mm}${dd}-${hh}${min}`;
+}
+
+function getSalesFilename(extension = "xlsx") {
+  return `riwayat-transaksi-${getTimestampToken()}.${extension}`;
+}
+
+function downloadBlobFile(filename, blob) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function downloadTextFile(filename, content, mimeType = "text/csv;charset=utf-8;") {
+  const blob = new Blob([content], { type: mimeType });
+  downloadBlobFile(filename, blob);
+}
+
+function getSalesSummaryRows(rowsForExport) {
+  const totalSales = rowsForExport.length;
+  const totalItemCount = rowsForExport.reduce((sum, row) => sum + row.itemCount, 0);
+  const totalAmount = rowsForExport.reduce((sum, row) => sum + row.totalAmount, 0);
+  const totalPaidAmount = rowsForExport.reduce((sum, row) => sum + row.paidAmount, 0);
+  const totalChangeAmount = rowsForExport.reduce((sum, row) => sum + row.changeAmount, 0);
+
+  return [
+    ["Laporan Transaksi Kasir"],
+    ["Dibuat Pada", new Date().toLocaleString("id-ID")],
+    [],
+    ["Jumlah Transaksi", totalSales],
+    ["Total Item Terjual", totalItemCount],
+    ["Total Omzet", totalAmount],
+    ["Total Pembayaran", totalPaidAmount],
+    ["Total Kembalian", totalChangeAmount]
+  ];
+}
+
+function applySheetNumberFormat(sheet, columnLetter, rowStart, rowEnd, numberFormat) {
+  for (let row = rowStart; row <= rowEnd; row += 1) {
+    const cellAddress = `${columnLetter}${row}`;
+    if (sheet[cellAddress]) {
+      sheet[cellAddress].z = numberFormat;
+    }
+  }
+}
+
+function exportSalesAsExcel(sales) {
+  if (!window.XLSX) {
+    throw new Error("Library Excel belum termuat");
+  }
+
+  const XLSX = window.XLSX;
+  const rowsForExport = createSalesRowsForExport(sales);
+
+  const detailHeaders = [
+    "No",
+    "ID Transaksi",
+    "Tanggal",
+    "Kasir",
+    "Jumlah Item",
+    "Total Belanja",
+    "Jumlah Bayar",
+    "Kembalian"
+  ];
+
+  const detailRows = rowsForExport.map((row) => [
+    row.no,
+    row.id,
+    row.dateText,
+    row.cashier,
+    row.itemCount,
+    row.totalAmount,
+    row.paidAmount,
+    row.changeAmount
+  ]);
+
+  const detailSheet = XLSX.utils.aoa_to_sheet([detailHeaders, ...detailRows]);
+  detailSheet["!cols"] = [
+    { wch: 6 },
+    { wch: 24 },
+    { wch: 24 },
+    { wch: 18 },
+    { wch: 12 },
+    { wch: 16 },
+    { wch: 16 },
+    { wch: 14 }
+  ];
+
+  if (detailRows.length > 0) {
+    detailSheet["!autofilter"] = { ref: `A1:H${detailRows.length + 1}` };
+    applySheetNumberFormat(detailSheet, "E", 2, detailRows.length + 1, "0");
+    applySheetNumberFormat(detailSheet, "F", 2, detailRows.length + 1, "#,##0");
+    applySheetNumberFormat(detailSheet, "G", 2, detailRows.length + 1, "#,##0");
+    applySheetNumberFormat(detailSheet, "H", 2, detailRows.length + 1, "#,##0");
+  }
+
+  const summarySheet = XLSX.utils.aoa_to_sheet(getSalesSummaryRows(rowsForExport));
+  summarySheet["!cols"] = [{ wch: 24 }, { wch: 22 }];
+  applySheetNumberFormat(summarySheet, "B", 4, 8, "#,##0");
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, summarySheet, "Ringkasan");
+  XLSX.utils.book_append_sheet(workbook, detailSheet, "Transaksi");
+
+  const workbookBytes = XLSX.write(workbook, {
+    bookType: "xlsx",
+    type: "array",
+    compression: true
+  });
+
+  const excelBlob = new Blob([workbookBytes], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
+
+  downloadBlobFile(getSalesFilename("xlsx"), excelBlob);
+}
+
+async function handleDownloadSales() {
+  if (!api) {
+    setStatus(checkoutStatusEl, "API aplikasi tidak tersedia", "error");
+    return;
+  }
+
+  try {
+    const keyword = normalizeSearch(salesSearchInput ? salesSearchInput.value : "");
+    const sales = keyword ? filteredSales : allSales;
+
+    if (!sales || sales.length === 0) {
+      if (keyword) {
+        setStatus(checkoutStatusEl, "Tidak ada hasil pencarian untuk diunduh", "error");
+        return;
+      }
+
+      setStatus(checkoutStatusEl, "Belum ada transaksi untuk diunduh", "error");
+      return;
+    }
+
+    if (window.XLSX) {
+      exportSalesAsExcel(sales);
+      setStatus(checkoutStatusEl, "File Excel transaksi berhasil diunduh", "success");
+      return;
+    }
+
+    const csvBody = createSalesCsvContent(sales);
+    const csvWithBom = `\uFEFF${csvBody}`;
+    downloadTextFile(getSalesFilename("csv"), csvWithBom);
+    setStatus(
+      checkoutStatusEl,
+      "Library Excel belum termuat, file CSV diunduh sebagai fallback",
+      "success"
+    );
+  } catch (error) {
+    setStatus(checkoutStatusEl, error.message || "Gagal mengunduh transaksi", "error");
+  }
 }
 
 async function setOutOfStockState(productId, isOutOfStock) {
@@ -581,6 +864,22 @@ document.addEventListener("keydown", (event) => {
 navButtons.forEach((button) => {
   button.addEventListener("click", handleSidebarNavClick);
 });
+if (downloadSalesBtn) {
+  downloadSalesBtn.addEventListener("click", handleDownloadSales);
+}
+if (salesSearchInput) {
+  salesSearchInput.addEventListener("input", applySalesFilter);
+}
+if (salesSearchResetBtn) {
+  salesSearchResetBtn.addEventListener("click", () => {
+    if (!salesSearchInput) {
+      return;
+    }
+
+    salesSearchInput.value = "";
+    applySalesFilter();
+  });
+}
 
 async function init() {
   checkoutBtn.disabled = true;
