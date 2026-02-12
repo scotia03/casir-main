@@ -337,6 +337,22 @@ async function setOutOfStockState(productId, isOutOfStock) {
   }
 }
 
+async function deleteProductFallbackWeb(productId) {
+  if (!window.firebase || !window.firebase.firestore) {
+    throw new Error("Fitur hapus belum aktif. Coba refresh atau deploy ulang.");
+  }
+
+  const productRef = window.firebase.firestore().collection("products").doc(productId);
+  const productDoc = await productRef.get();
+
+  if (!productDoc.exists) {
+    throw new Error("Produk tidak ditemukan");
+  }
+
+  await productRef.delete();
+  return { id: productId };
+}
+
 async function deleteProduct(productId) {
   if (!api) {
     setStatus(addProductListStatusEl, "API aplikasi tidak tersedia", "error");
@@ -352,7 +368,12 @@ async function deleteProduct(productId) {
   }
 
   try {
-    await api.deleteProduct(productId);
+    if (typeof api.deleteProduct === "function") {
+      await api.deleteProduct(productId);
+    } else {
+      await deleteProductFallbackWeb(productId);
+    }
+
     cart = cart.filter((item) => item.id !== productId);
     setStatus(addProductListStatusEl, "Produk berhasil dihapus", "success");
     await loadProducts();
