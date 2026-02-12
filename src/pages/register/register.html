@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Registrasi Kasir</title>
+  <link rel="stylesheet" href="register.css" />
+  <script defer src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
+  <script defer src="../shared/web-api.js"></script>
+  <script defer src="register.js"></script>
+</head>
+<body>
+  <main class="registerCard">
+    <h2>Registrasi Pengguna</h2>
+
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <input type="password" id="confirmPassword" placeholder="Konfirmasi Password" />
+
+    <button id="registerBtn">Daftar</button>
+    <button id="backToLoginBtn" class="secondaryBtn" type="button">Kembali ke Login</button>
+
+    <p class="hint">Akun yang didaftarkan akan memiliki role kasir.</p>
+    <p id="status" class="status"></p>
+  </main>
+</body>
+</html>

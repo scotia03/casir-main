@@ -1,0 +1,118 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function currentUserDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function currentUserExists() {
+      return isSignedIn() && currentUserDoc().exists();
+    }
+
+    function currentRole() {
+      return currentUserDoc().data.role;
+    }
+
+    function isAdmin() {
+      return currentUserExists() && currentRole() == 'admin';
+    }
+
+    function isCashierOrAdmin() {
+      return currentUserExists() &&
+        (currentRole() == 'cashier' || currentRole() == 'admin');
+    }
+
+    function validUserProfile(data) {
+      return data.keys().hasOnly([
+        'username',
+        'usernameLower',
+        'role',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.username is string &&
+      data.username.size() >= 3 &&
+      data.username.size() <= 40 &&
+      data.usernameLower is string &&
+      data.usernameLower.size() >= 3 &&
+      data.usernameLower.size() <= 40 &&
+      data.role in ['cashier', 'admin'];
+    }
+
+    function validProductData(data) {
+      return data.keys().hasOnly([
+        'name',
+        'nameLower',
+        'price',
+        'isOutOfStock',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.name is string &&
+      data.name.size() > 0 &&
+      data.name.size() <= 120 &&
+      data.nameLower is string &&
+      data.nameLower.size() > 0 &&
+      data.nameLower.size() <= 120 &&
+      data.price is int &&
+      data.price > 0 &&
+      (!('isOutOfStock' in data) || data.isOutOfStock is bool);
+    }
+
+    function validSaleData(data) {
+      return data.keys().hasOnly([
+        'userId',
+        'cashier',
+        'totalAmount',
+        'paidAmount',
+        'changeAmount',
+        'itemCount',
+        'items',
+        'createdAt'
+      ]) &&
+      data.userId is string &&
+      data.userId == request.auth.uid &&
+      data.cashier is string &&
+      data.cashier.size() > 0 &&
+      data.totalAmount is int &&
+      data.totalAmount > 0 &&
+      data.paidAmount is int &&
+      data.paidAmount >= data.totalAmount &&
+      data.changeAmount is int &&
+      data.changeAmount == data.paidAmount - data.totalAmount &&
+      data.itemCount is int &&
+      data.itemCount > 0 &&
+      data.items is list &&
+      data.items.size() == data.itemCount &&
+      data.items.size() <= 200;
+    }
+
+    match /users/{uid} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+      allow create: if isSignedIn() &&
+                    request.auth.uid == uid &&
+                    validUserProfile(request.resource.data);
+      allow update: if isSignedIn() &&
+                    request.auth.uid == uid &&
+                    validUserProfile(request.resource.data);
+      allow delete: if false;
+    }
+
+    match /products/{productId} {
+      allow read: if isCashierOrAdmin();
+      allow create: if isAdmin() && validProductData(request.resource.data);
+      allow update: if isAdmin() && validProductData(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /sales/{saleId} {
+      allow read: if isCashierOrAdmin();
+      allow create: if isCashierOrAdmin() && validSaleData(request.resource.data);
+      allow update, delete: if false;
+    }
+  }
+}

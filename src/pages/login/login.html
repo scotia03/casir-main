@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login Kasir</title>
+  <link rel="stylesheet" href="login.css" />
+  <script defer src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
+  <script defer src="../shared/web-api.js"></script>
+  <script defer src="login.js"></script>
+</head>
+<body>
+  <main class="loginCard">
+    <h2>Login Sistem Kasir</h2>
+
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <button id="loginBtn">Login</button>
+    <button id="goRegisterBtn" class="secondaryBtn" type="button">Buat Akun Baru</button>
+
+    <p class="hint">Belum punya akun? Klik "Buat Akun Baru".</p>
+    <p id="error" class="error"></p>
+  </main>
+</body>
+</html>
