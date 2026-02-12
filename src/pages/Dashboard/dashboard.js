@@ -21,6 +21,9 @@ const cartFabCount = document.getElementById("cartFabCount");
 const cartDrawer = document.getElementById("cartDrawer");
 const cartBackdrop = document.getElementById("cartBackdrop");
 const closeCartBtn = document.getElementById("closeCartBtn");
+const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+const sidebarToggleBtn = document.getElementById("sidebarToggleBtn");
+const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
 const salesList = document.getElementById("salesList");
 const productStatusEl = document.getElementById("productStatus");
 const checkoutStatusEl = document.getElementById("checkoutStatus");
@@ -99,6 +102,14 @@ function setCartDrawerOpen(isOpen) {
   cartBackdrop.classList.toggle("open", isOpen);
 }
 
+function isMobileViewport() {
+  return window.matchMedia("(max-width: 920px)").matches;
+}
+
+function setSidebarOpen(isOpen) {
+  document.body.classList.toggle("sidebar-open", isOpen);
+}
+
 function handleSidebarNavClick(event) {
   const button = event.currentTarget;
   const targetId = button.dataset.navTarget;
@@ -112,6 +123,10 @@ function handleSidebarNavClick(event) {
   button.classList.add("active");
   featurePanels.forEach((panel) => panel.classList.remove("active"));
   targetSection.classList.add("active");
+
+  if (isMobileViewport()) {
+    setSidebarOpen(false);
+  }
 }
 
 function getTotal() {
@@ -468,6 +483,23 @@ cartFab.addEventListener("click", () => {
 });
 closeCartBtn.addEventListener("click", () => setCartDrawerOpen(false));
 cartBackdrop.addEventListener("click", () => setCartDrawerOpen(false));
+sidebarToggleBtn.addEventListener("click", () => {
+  const isOpen = document.body.classList.contains("sidebar-open");
+  setSidebarOpen(!isOpen);
+});
+sidebarCloseBtn.addEventListener("click", () => setSidebarOpen(false));
+sidebarBackdrop.addEventListener("click", () => setSidebarOpen(false));
+window.addEventListener("resize", () => {
+  if (!isMobileViewport()) {
+    setSidebarOpen(false);
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    setSidebarOpen(false);
+    setCartDrawerOpen(false);
+  }
+});
 
 navButtons.forEach((button) => {
   button.addEventListener("click", handleSidebarNavClick);

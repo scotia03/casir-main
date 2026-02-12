@@ -11,8 +11,14 @@
   <script defer src="dashboard.js"></script>
 </head>
 <body>
+  <div id="sidebarBackdrop" class="sidebarBackdrop"></div>
+
   <div class="appShell">
     <aside class="sidebar">
+      <button id="sidebarCloseBtn" class="sidebarCloseBtn" type="button" aria-label="Tutup menu">
+        X
+      </button>
+
       <div class="brand">
         <h2>Kasir App</h2>
         <p>Sistem Penjualan</p>
@@ -32,6 +38,12 @@
 
     <div class="contentWrap">
       <header class="topbar">
+        <button id="sidebarToggleBtn" class="mobileMenuBtn" type="button" aria-label="Buka menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
         <div>
           <h1>Dashboard Kasir</h1>
           <p class="subtitle">Pilih produk dari daftar utama, lalu buka ikon keranjang di kanan bawah untuk checkout.</p>
