@@ -299,7 +299,7 @@ function renderSales(sales) {
 
   if (!sales || sales.length === 0) {
     salesList.innerHTML = `
-      <tr>
+      <tr class="salesEmptyRow">
         <td colspan="5">Belum ada transaksi</td>
       </tr>
     `;
@@ -308,14 +308,17 @@ function renderSales(sales) {
 
   const rows = sales
     .map((sale) => {
-      const dateText = formatSalesDate(sale.createdAt);
+      const dateText = formatSalesDateCompact(sale.createdAt);
+      const saleId = String(sale.id || "");
       return `
-        <tr>
-          <td>${sale.id}</td>
-          <td>${sale.cashier || "unknown"}</td>
-          <td>${Number(sale.itemCount) || 0}</td>
-          <td>${formatCurrency(sale.totalAmount)}</td>
-          <td>${dateText}</td>
+        <tr class="salesRow">
+          <td data-label="ID">
+            <span class="saleIdText" title="${saleId}">${shortSaleId(saleId)}</span>
+          </td>
+          <td data-label="Kasir">${sale.cashier || "unknown"}</td>
+          <td data-label="Item">${Number(sale.itemCount) || 0}</td>
+          <td data-label="Total" class="salesCellTotal">${formatCurrency(sale.totalAmount)}</td>
+          <td data-label="Tanggal">${dateText}</td>
         </tr>
       `;
     })
@@ -332,6 +335,29 @@ function formatSalesDate(value) {
   return value ? new Date(value).toLocaleString("id-ID") : "-";
 }
 
+function formatSalesDateCompact(value) {
+  if (!value) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(value));
+}
+
+function shortSaleId(value) {
+  const raw = String(value || "");
+  if (raw.length <= 12) {
+    return raw;
+  }
+
+  return `${raw.slice(0, 8)}...${raw.slice(-4)}`;
+}
+
 function applySalesFilter() {
   const keyword = normalizeSearch(salesSearchInput ? salesSearchInput.value : "");
 
@@ -344,6 +370,7 @@ function applySalesFilter() {
       sale.id,
       sale.cashier || "unknown",
       formatSalesDate(sale.createdAt),
+      formatSalesDateCompact(sale.createdAt),
       String(Number(sale.totalAmount) || 0),
       String(Number(sale.itemCount) || 0)
     ]
@@ -368,7 +395,7 @@ function renderSalesSearchInfo(keyword) {
   }
 
   if (!keyword) {
-    salesSearchInfoEl.innerText = `Menampilkan ${filteredSales.length} transaksi terbaru.`;
+    salesSearchInfoEl.innerText = `Menampilkan ${filteredSales.length} transaksi.`;
     return;
   }
 

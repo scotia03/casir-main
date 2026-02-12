@@ -8,8 +8,8 @@
   <script defer src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore-compat.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script defer src="../shared/web-api.js?v=20260212-4"></script>
-  <script defer src="dashboard.js?v=20260212-4"></script>
+  <script defer src="../shared/web-api.js?v=20260212-5"></script>
+  <script defer src="dashboard.js?v=20260212-5"></script>
 </head>
 <body>
   <div id="sidebarBackdrop" class="sidebarBackdrop"></div>
@@ -134,8 +134,8 @@
             <button id="salesSearchResetBtn" class="btnLight" type="button">Reset</button>
           </div>
           <p id="salesSearchInfo" class="salesSearchInfo"></p>
-          <div class="tableWrap">
-            <table>
+          <div class="tableWrap salesTableWrap">
+            <table class="salesTable">
               <thead>
                 <tr>
                   <th>ID</th>
@@ -145,7 +145,7 @@
                   <th>Tanggal</th>
                 </tr>
               </thead>
-              <tbody id="salesList"></tbody>
+              <tbody id="salesList" class="salesTableBody"></tbody>
             </table>
           </div>
         </section>
